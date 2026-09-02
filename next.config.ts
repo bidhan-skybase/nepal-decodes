@@ -1,7 +1,12 @@
-import type { NextConfig } from "next";
+import { withPayload } from "@payloadcms/next/withPayload";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    logging: {
+        fetches: {
+            fullUrl: true,
+        },
+    },
 };
 
-export default nextConfig;
+export default withPayload(nextConfig);

@@ -36,13 +36,13 @@ export default function Footer() {
         <div className="footer-col-links">
           <h3 className="footer-heading">Sections</h3>
           <ul className="footer-list">
-            <li><Link href="/category/politics">Politics</Link></li>
-            <li><Link href="/category/society">Society</Link></li>
-            <li><Link href="/category/economy">Economy</Link></li>
-            <li><Link href="/category/technology">Technology</Link></li>
-            <li><Link href="/category/culture">Culture</Link></li>
-            <li><Link href="/category/opinion">Opinion</Link></li>
-            <li><Link href="/category/explainers">Explainers</Link></li>
+            <li><Link href="/src/app/(frontend)/category/politics">Politics</Link></li>
+            <li><Link href="/src/app/(frontend)/category/society">Society</Link></li>
+            <li><Link href="/src/app/(frontend)/category/economy">Economy</Link></li>
+            <li><Link href="/src/app/(frontend)/category/technology">Technology</Link></li>
+            <li><Link href="/src/app/(frontend)/category/culture">Culture</Link></li>
+            <li><Link href="/src/app/(frontend)/category/opinion">Opinion</Link></li>
+            <li><Link href="/src/app/(frontend)/category/explainers">Explainers</Link></li>
           </ul>
         </div>
 

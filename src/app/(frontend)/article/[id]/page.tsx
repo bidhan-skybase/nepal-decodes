@@ -38,10 +38,10 @@ export default async function ArticlePage({ params }: PageProps) {
       <div className="container">
         {/* ================= HEADER META ================= */}
         <header className="article-header">
-          <Link href={`/category/${article.category.toLowerCase()}`} className="article-category">
+          <Link href={`/src/app/(frontend)/category/${article.category.toLowerCase()}`} className="article-category">
             {article.category}
           </Link>
-          
+
           <h1 className="article-title-main">{article.title}</h1>
           <p className="article-subtitle-main">{article.deck}</p>
 
@@ -123,7 +123,7 @@ export default async function ArticlePage({ params }: PageProps) {
           {/* ================= NAVIGATIONAL ROW ================= */}
           <nav className="article-navigation-row" aria-label="Article navigation">
             {prevArticle ? (
-              <Link href={`/article/${prevArticle.id}`} className="article-nav-block">
+              <Link href={`/src/app/(frontend)/article/${prevArticle.id}`} className="article-nav-block">
                 <span className="article-nav-label">
                   <ChevronLeft size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
                   Previous
@@ -135,7 +135,7 @@ export default async function ArticlePage({ params }: PageProps) {
             )}
 
             {nextArticle ? (
-              <Link href={`/article/${nextArticle.id}`} className="article-nav-block" style={{ textAlign: 'right', alignItems: 'flex-end' }}>
+              <Link href={`/src/app/(frontend)/article/${nextArticle.id}`} className="article-nav-block" style={{ textAlign: 'right', alignItems: 'flex-end' }}>
                 <span className="article-nav-label">
                   Next
                   <ChevronRight size={12} style={{ verticalAlign: 'middle', marginLeft: '4px' }} />
@@ -158,7 +158,7 @@ export default async function ArticlePage({ params }: PageProps) {
             <div className="related-grid">
               {relatedArticles.map((relStory) => (
                 <article key={relStory.id} className="article-card">
-                  <Link href={`/article/${relStory.id}`} className="card-image-link">
+                  <Link href={`/src/app/(frontend)/article/${relStory.id}`} className="card-image-link">
                     <div className="hover-zoom-container card-image-wrapper">
                       <Image
                         src={relStory.image}
@@ -170,11 +170,11 @@ export default async function ArticlePage({ params }: PageProps) {
                     </div>
                   </Link>
                   <div className="card-content">
-                    <Link href={`/category/${relStory.category.toLowerCase()}`} className="category-label">
+                    <Link href={`/src/app/(frontend)/category/${relStory.category.toLowerCase()}`} className="category-label">
                       {relStory.category}
                     </Link>
                     <h4 className="card-title" style={{ fontSize: '18px' }}>
-                      <Link href={`/article/${relStory.id}`} className="editorial-link">
+                      <Link href={`/src/app/(frontend)/article/${relStory.id}`} className="editorial-link">
                         {relStory.title}
                       </Link>
                     </h4>

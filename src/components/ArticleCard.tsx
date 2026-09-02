@@ -5,7 +5,7 @@ import { Article } from '@/data/mockData';
 export default function ArticleCard({ article }: { article: Article }) {
   return (
     <article className="article-card">
-      <Link href={`/article/${article.id}`} className="card-image-link">
+      <Link href={`/src/app/(frontend)/article/${article.id}`} className="card-image-link">
         <div className="hover-zoom-container card-image-wrapper">
           <Image
             src={article.image}
@@ -20,14 +20,14 @@ export default function ArticleCard({ article }: { article: Article }) {
 
       <div className="card-content">
         <div className="card-meta-top">
-          <Link href={`/category/${article.category.toLowerCase()}`} className="category-label">
+          <Link href={`/src/app/(frontend)/category/${article.category.toLowerCase()}`} className="category-label">
             {article.category}
           </Link>
           <span className="card-read-time">{article.readTime}</span>
         </div>
 
         <h3 className="card-title">
-          <Link href={`/article/${article.id}`} className="editorial-link">
+          <Link href={`/src/app/(frontend)/article/${article.id}`} className="editorial-link">
             {article.title}
           </Link>
         </h3>

@@ -33,7 +33,7 @@ export default function Home() {
         {/* ================= HERO STORY ================= */}
         <section className="hero-section">
           <div className="hover-zoom-container hero-image-container">
-            <Link href={`/article/${heroStory.id}`}>
+            <Link href={`/src/app/(frontend)/article/${heroStory.id}`}>
               <Image
                 src={heroStory.image}
                 alt={heroStory.title}
@@ -48,18 +48,18 @@ export default function Home() {
 
           <div className="hero-content">
             <div className="hero-meta">
-              <Link href={`/category/${heroStory.category.toLowerCase()}`} className="category-label">
+              <Link href={`/src/app/(frontend)/category/${heroStory.category.toLowerCase()}`} className="category-label">
                 {heroStory.category}
               </Link>
               <span className="hero-read-time">{heroStory.readTime}</span>
             </div>
-            
+
             <h1 className="hero-title">
-              <Link href={`/article/${heroStory.id}`} className="editorial-link">
+              <Link href={`/src/app/(frontend)/article/${heroStory.id}`} className="editorial-link">
                 {heroStory.title}
               </Link>
             </h1>
-            
+
             <p className="hero-deck">{heroStory.deck}</p>
 
             <div className="hero-author-meta">
@@ -110,11 +110,11 @@ export default function Home() {
                   <li key={story.id} className="trending-item">
                     <span className="trending-number">0{index + 1}</span>
                     <div className="trending-item-content">
-                      <Link href={`/category/${story.category.toLowerCase()}`} className="trending-item-category">
+                      <Link href={`/src/app/(frontend)/category/${story.category.toLowerCase()}`} className="trending-item-category">
                         {story.category}
                       </Link>
                       <h4 className="trending-item-title">
-                        <Link href={`/article/${story.id}`}>
+                        <Link href={`/src/app/(frontend)/article/${story.id}`}>
                           {story.title}
                         </Link>
                       </h4>
@@ -130,11 +130,11 @@ export default function Home() {
               <div className="picks-list">
                 {editorsPicks.map((story) => (
                   <div key={story.id} className="pick-item">
-                    <Link href={`/category/${story.category.toLowerCase()}`} className="pick-item-category">
+                    <Link href={`/src/app/(frontend)/category/${story.category.toLowerCase()}`} className="pick-item-category">
                       {story.category}
                     </Link>
                     <h4 className="pick-item-title">
-                      <Link href={`/article/${story.id}`}>
+                      <Link href={`/src/app/(frontend)/article/${story.id}`}>
                         {story.title}
                       </Link>
                     </h4>

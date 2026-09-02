@@ -13,7 +13,7 @@ interface PageProps {
 
 export default function CategoryPage({ params }: PageProps) {
   const { name } = use(params);
-  
+
   // Find current category
   const category = categories.find((c) => c.id === name.toLowerCase());
 
@@ -87,7 +87,7 @@ export default function CategoryPage({ params }: PageProps) {
         {categoryFeatured && currentPage === 1 && searchTerm === '' && (
           <section className="hero-section" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--spacing-xxl)' }}>
             <div className="hover-zoom-container hero-image-container">
-              <Link href={`/article/${categoryFeatured.id}`}>
+              <Link href={`/src/app/(frontend)/article/${categoryFeatured.id}`}>
                 <Image
                   src={categoryFeatured.image}
                   alt={categoryFeatured.title}
@@ -106,7 +106,7 @@ export default function CategoryPage({ params }: PageProps) {
                 <span className="hero-read-time">{categoryFeatured.readTime}</span>
               </div>
               <h2 className="hero-title" style={{ fontSize: '32px' }}>
-                <Link href={`/article/${categoryFeatured.id}`} className="editorial-link">
+                <Link href={`/src/app/(frontend)/article/${categoryFeatured.id}`} className="editorial-link">
                   {categoryFeatured.title}
                 </Link>
               </h2>
