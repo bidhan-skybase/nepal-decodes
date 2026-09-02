@@ -223,7 +223,7 @@ export default async function ArticlePage({ params }: PageProps) {
             </nav>
 
             {/* ================= COMMENTS SECTION ================= */}
-            <Comments articleId={String(article.id)} />
+            {/*<Comments articleId={String(article.id)} />*/}
           </div>
 
           {/* ================= RELATED ARTICLES FOOTER ================= */}
