@@ -20,7 +20,7 @@ export default buildConfig({
     },
     collections: [Users, Media, Categories, Authors, Articles],
     editor: lexicalEditor(),
-    db: mongooseAdapter({ url: process.env.DATABASE_URI || '' }),
+    db: mongooseAdapter({ url: process.env.MONGODB_URI || '' }),
     secret: process.env.PAYLOAD_SECRET || '',
     typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
     sharp,

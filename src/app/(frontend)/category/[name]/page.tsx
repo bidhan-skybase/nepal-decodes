@@ -1,199 +1,183 @@
-'use client';
-
-import { useState, useMemo, use } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { articles, categories, Article } from '@/data/mockData';
 import ArticleCard from '@/components/ArticleCard';
+import {
+  getCategoryArticles,
+  getCategoryFeatured,
+} from '@/lib/articles';
+import { formatDate, resolve } from '@/lib/utils';
+import {Author, Media} from "../../../../../payload-types";
+import CategoryControls from "@/components/CategoryControls";
+import {getCategoryBySlug} from "@/lib/categories";
+
+const ITEMS_PER_PAGE = 6;
 
 interface PageProps {
   params: Promise<{ name: string }>;
+  searchParams: Promise<{ sort?: string; q?: string; page?: string }>;
 }
 
-export default function CategoryPage({ params }: PageProps) {
-  const { name } = use(params);
+export async function generateMetadata({ params }: PageProps) {
+  const { name } = await params;
+  const category = await getCategoryBySlug(name.toLowerCase());
+  if (!category) return { title: 'Section not found' };
 
-  // Find current category
-  const category = categories.find((c) => c.id === name.toLowerCase());
+  return {
+    title: `${category.name} | Nepal Decodes`,
+    description: category.description,
+  };
+}
 
-  if (!category) {
-    notFound();
-  }
+export default async function CategoryPage({ params, searchParams }: PageProps) {
+  const { name } = await params;
+  const { sort = 'latest', q = '', page = '1' } = await searchParams;
 
-  // State controls
-  const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const category = await getCategoryBySlug(name.toLowerCase());
+  if (!category) notFound();
 
-  // Filter articles for this category
-  const categoryArticles = useMemo(() => {
-    return articles.filter((a) => a.category.toLowerCase() === category.id);
-  }, [category.id]);
+  const currentPage = Math.max(1, Number(page) || 1);
+  const searchTerm = q.trim();
+  const sortBy = sort === 'popular' ? 'popular' : 'latest';
 
   // Find the top featured article for this category
-  const categoryFeatured = categoryArticles[0];
+  const categoryFeatured = await getCategoryFeatured(category.id);
 
-  // Filtered and Sorted list (excluding the category featured article if it exists)
-  const processedArticles = useMemo(() => {
-    const listToProcess = categoryFeatured
-      ? categoryArticles.filter((a) => a.id !== categoryFeatured.id)
-      : categoryArticles;
+  const result = await getCategoryArticles({
+    categoryId: category.id,
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    sort: sortBy,
+    q: searchTerm,
+    excludeId: categoryFeatured?.id,
+  });
 
-    // Filter by search term
-    let filtered = listToProcess;
-    if (searchTerm.trim() !== '') {
-      const query = searchTerm.toLowerCase();
-      filtered = listToProcess.filter(
-        (a) =>
-          a.title.toLowerCase().includes(query) ||
-          a.deck.toLowerCase().includes(query)
-      );
-    }
+  const paginatedArticles = result.docs;
+  const totalPages = result.totalPages || 1;
+  const showFeatured = currentPage === 1 && searchTerm === '' && Boolean(categoryFeatured);
 
-    // Sort by selection
-    return [...filtered].sort((a, b) => {
-      if (sortBy === 'popular') {
-        return b.views - a.views;
-      } else {
-        // Date sort (since they are mock string dates, convert or fallback to index)
-        const dateA = new Date(a.publishedAt).getTime();
-        const dateB = new Date(b.publishedAt).getTime();
-        return dateB - dateA;
-      }
-    });
-  }, [categoryArticles, categoryFeatured, sortBy, searchTerm]);
+  const featuredImage = resolve<Media>(categoryFeatured?.image);
+  const featuredAuthor = resolve<Author>(categoryFeatured?.author);
 
-  // Paginated articles
-  const paginatedArticles = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return processedArticles.slice(startIndex, startIndex + itemsPerPage);
-  }, [processedArticles, currentPage]);
-
-  const totalPages = Math.ceil(processedArticles.length / itemsPerPage) || 1;
+  const buildHref = (nextPage: number) => {
+    const sp = new URLSearchParams();
+    if (sortBy !== 'latest') sp.set('sort', sortBy);
+    if (searchTerm) sp.set('q', searchTerm);
+    if (nextPage > 1) sp.set('page', String(nextPage));
+    const qs = sp.toString();
+    return qs ? `/category/${name}?${qs}` : `/category/${name}`;
+  };
 
   return (
-    <div className="category-page animate-fade-in">
-      <div className="container">
-        {/* ================= CATEGORY BANNER ================= */}
-        <header className="category-banner">
-          <span className="category-label" style={{ marginBottom: '4px' }}>Section</span>
-          <h1 className="category-page-title">{category.name}</h1>
-          <p className="category-page-description">{category.description}</p>
-        </header>
+      <div className="category-page animate-fade-in">
+        <div className="container">
+          {/* ================= CATEGORY BANNER ================= */}
+          <header className="category-banner">
+            <span className="category-label" style={{ marginBottom: '4px' }}>Section</span>
+            <h1 className="category-page-title">{category.name}</h1>
+            <p className="category-page-description">{category.description}</p>
+          </header>
 
-        {/* ================= CATEGORY FEATURED STORY ================= */}
-        {categoryFeatured && currentPage === 1 && searchTerm === '' && (
-          <section className="hero-section" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--spacing-xxl)' }}>
-            <div className="hover-zoom-container hero-image-container">
-              <Link href={`/src/app/(frontend)/article/${categoryFeatured.id}`}>
-                <Image
-                  src={categoryFeatured.image}
-                  alt={categoryFeatured.title}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                  style={{ objectFit: 'cover' }}
-                  className="hover-zoom-image"
-                />
-              </Link>
-            </div>
-
-            <div className="hero-content">
-              <div className="hero-meta">
-                <span className="category-label">{categoryFeatured.category}</span>
-                <span className="hero-read-time">{categoryFeatured.readTime}</span>
-              </div>
-              <h2 className="hero-title" style={{ fontSize: '32px' }}>
-                <Link href={`/src/app/(frontend)/article/${categoryFeatured.id}`} className="editorial-link">
-                  {categoryFeatured.title}
-                </Link>
-              </h2>
-              <p className="hero-deck" style={{ fontSize: '16px' }}>{categoryFeatured.deck}</p>
-              <div className="hero-author-meta">
-                <div className="author-avatar-medium">
-                  {categoryFeatured.author.avatar}
+          {/* ================= CATEGORY FEATURED STORY ================= */}
+          {showFeatured && categoryFeatured && (
+              <section className="hero-section" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--spacing-xxl)' }}>
+                <div className="hover-zoom-container hero-image-container">
+                  <Link href={`/article/${categoryFeatured.slug}`}>
+                    {featuredImage?.url && (
+                        <Image
+                            src={featuredImage.url}
+                            alt={featuredImage.alt || categoryFeatured.title}
+                            fill
+                            priority
+                            sizes="(max-width: 1024px) 100vw, 60vw"
+                            style={{ objectFit: 'cover' }}
+                            className="hover-zoom-image"
+                        />
+                    )}
+                  </Link>
                 </div>
-                <div className="author-info-medium">
-                  <span className="author-name-medium">{categoryFeatured.author.name}</span>
-                  <span className="author-date-medium">{categoryFeatured.publishedAt}</span>
+
+                <div className="hero-content">
+                  <div className="hero-meta">
+                    <span className="category-label">{category.name}</span>
+                    <span className="hero-read-time">{categoryFeatured.readTime}</span>
+                  </div>
+                  <h2 className="hero-title" style={{ fontSize: '32px' }}>
+                    <Link href={`/article/${categoryFeatured.slug}`} className="editorial-link">
+                      {categoryFeatured.title}
+                    </Link>
+                  </h2>
+                  <p className="hero-deck" style={{ fontSize: '16px' }}>{categoryFeatured.deck}</p>
+                  {featuredAuthor && (
+                      <div className="hero-author-meta">
+                        <div className="author-avatar-medium">{featuredAuthor.avatar}</div>
+                        <div className="author-info-medium">
+                          <span className="author-name-medium">{featuredAuthor.name}</span>
+                          <span className="author-date-medium">
+                      {formatDate(categoryFeatured.publishedAt)}
+                    </span>
+                        </div>
+                      </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          </section>
-        )}
+              </section>
+          )}
 
-        {/* ================= CONTROLS BAR ================= */}
-        <div className="category-controls-bar" style={{ marginTop: 'var(--spacing-xl)' }}>
-          <div className="sort-container">
-            <label htmlFor="sort-select" style={{ marginRight: '8px', color: 'var(--color-text-muted)', fontWeight: 500 }}>Sort by:</label>
-            <select
-              id="sort-select"
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value as 'latest' | 'popular');
-                setCurrentPage(1);
-              }}
-              className="sort-select"
-            >
-              <option value="latest">Latest Stories</option>
-              <option value="popular">Most Popular</option>
-            </select>
-          </div>
+          {/* ================= CONTROLS BAR ================= */}
+          <CategoryControls sort={sortBy} q={searchTerm} />
 
-          <input
-            type="text"
-            placeholder="Search in category..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="category-search-input"
-          />
-        </div>
+          {/* ================= ARTICLE GRID ================= */}
+          {paginatedArticles.length > 0 ? (
+              <section>
+                <div className="category-grid">
+                  {paginatedArticles.map((article) => (
+                      <ArticleCard key={article.id} article={article} />
+                  ))}
+                </div>
 
-        {/* ================= ARTICLE GRID ================= */}
-        {paginatedArticles.length > 0 ? (
-          <section>
-            <div className="category-grid">
-              {paginatedArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="pagination">
+                      {result.hasPrevPage ? (
+                          <Link
+                              href={buildHref(currentPage - 1)}
+                              className="btn-secondary"
+                              style={{ padding: '8px 16px' }}
+                          >
+                            Previous
+                          </Link>
+                      ) : (
+                          <span className="btn-secondary" style={{ padding: '8px 16px', opacity: 0.5 }}>
+                    Previous
+                  </span>
+                      )}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="btn-secondary"
-                  style={{ padding: '8px 16px', opacity: currentPage === 1 ? 0.5 : 1 }}
-                >
-                  Previous
-                </button>
-                <span className="page-info">
+                      <span className="page-info">
                   Page {currentPage} of {totalPages}
                 </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="btn-secondary"
-                  style={{ padding: '8px 16px', opacity: currentPage === totalPages ? 0.5 : 1 }}
-                >
-                  Next
-                </button>
+
+                      {result.hasNextPage ? (
+                          <Link
+                              href={buildHref(currentPage + 1)}
+                              className="btn-secondary"
+                              style={{ padding: '8px 16px' }}
+                          >
+                            Next
+                          </Link>
+                      ) : (
+                          <span className="btn-secondary" style={{ padding: '8px 16px', opacity: 0.5 }}>
+                    Next
+                  </span>
+                      )}
+                    </div>
+                )}
+              </section>
+          ) : (
+              <div className="search-no-results" style={{ padding: '80px 0' }}>
+                <p>No stories found matching your filter criteria.</p>
               </div>
-            )}
-          </section>
-        ) : (
-          <div className="search-no-results" style={{ padding: '80px 0' }}>
-            <p>No stories found matching your filter criteria.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
   );
 }

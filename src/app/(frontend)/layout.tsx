@@ -44,22 +44,22 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <head>
         {/* Anti-flicker dark mode script */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme');
-                  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark-theme');
-                  } else {
-                    document.documentElement.classList.remove('dark-theme');
-                  }
-                } catch (e) {}
-              })()
-            `,
-          }}
-        />
+        {/*<script*/}
+        {/*  dangerouslySetInnerHTML={{*/}
+        {/*    __html: `*/}
+        {/*      (function() {*/}
+        {/*        try {*/}
+        {/*          var theme = localStorage.getItem('theme');*/}
+        {/*          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {*/}
+        {/*            document.documentElement.classList.add('dark-theme');*/}
+        {/*          } else {*/}
+        {/*            document.documentElement.classList.remove('dark-theme');*/}
+        {/*          }*/}
+        {/*        } catch (e) {}*/}
+        {/*      })()*/}
+        {/*    `,*/}
+        {/*  }}*/}
+        {/*/>*/}
       </head>
       <body>
         <Header />

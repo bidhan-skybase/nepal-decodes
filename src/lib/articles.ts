@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { getPayload } from 'payload'
+import {getPayload, Where} from 'payload'
 import config from '@payload-config'
 import {Article} from "../../payload-types";
 
@@ -79,3 +79,48 @@ export const getEditorsPicks = cache(async (limit = 3) => {
     })
     return docs
 })
+
+export const getCategoryFeatured = cache(async (categoryId: string) => {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({
+        collection: 'articles',
+        depth: 2,
+        limit: 1,
+        sort: '-publishedAt',
+        where: { and: [PUBLISHED, { category: { equals: categoryId } }] },
+    })
+    return docs[0] ?? null
+})
+
+export const getCategoryArticles = cache(
+    async (opts: {
+        categoryId: string
+        page?: number
+        limit?: number
+        sort?: 'latest' | 'popular'
+        q?: string
+        excludeId?: string | number
+    }) => {
+        const payload = await getPayload({ config })
+
+        const where: Where = {
+            and: [
+                PUBLISHED,
+                { category: { equals: opts.categoryId } },
+                ...(opts.excludeId ? [{ id: { not_equals: opts.excludeId } }] : []),
+                ...(opts.q
+                    ? [{ or: [{ title: { like: opts.q } }, { deck: { like: opts.q } }] }]
+                    : []),
+            ],
+        }
+
+        return payload.find({
+            collection: 'articles',
+            depth: 2,
+            page: opts.page ?? 1,
+            limit: opts.limit ?? 6,
+            sort: opts.sort === 'popular' ? '-views' : '-publishedAt',
+            where,
+        })
+    },
+)

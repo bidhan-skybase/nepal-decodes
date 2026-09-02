@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Search, Clock, ArrowRight, TrendingUp } from 'lucide-react';
-import { articles, Article } from '@/data/mockData';
+import { X, Search, Clock, ArrowRight, TrendingUp, Loader2 } from 'lucide-react';
+import { stringify } from 'qs-esm';
+import type { Where } from 'payload';
+import { resolve } from '@/lib/utils';
+import {Article, Category} from "../../payload-types";
 
 const POPULAR_TOPICS = [
   'Federalism',
@@ -16,12 +18,41 @@ const POPULAR_TOPICS = [
   'Water System'
 ];
 
+const RESULT_LIMIT = 8;
+const DEBOUNCE_MS = 300;
+
+const buildSearchUrl = (term: string) => {
+  const where: Where = {
+    and: [
+      { _status: { equals: 'published' } },
+      {
+        or: [
+          { title: { like: term } },
+          { deck: { like: term } },
+          { 'category.name': { like: term } },
+          { 'content.value': { like: term } },
+        ],
+      },
+    ],
+  };
+
+  const query = stringify(
+      { where, depth: 1, limit: RESULT_LIMIT, sort: '-publishedAt' },
+      { addQueryPrefix: true },
+  );
+
+  return `/api/articles${query}`;
+};
+
 export default function SearchOverlay() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Article[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  
+
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -61,6 +92,8 @@ export default function SearchOverlay() {
       document.body.style.overflow = '';
       setQuery('');
       setResults([]);
+      setTotalResults(0);
+      setError(null);
     }
     return () => {
       document.body.style.overflow = '';
@@ -78,46 +111,75 @@ export default function SearchOverlay() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Real-time filtering
+  // Debounced search against the Payload REST API
   useEffect(() => {
-    if (query.trim() === '') {
+    const term = query.trim();
+
+    if (term === '') {
       setResults([]);
+      setTotalResults(0);
+      setIsLoading(false);
+      setError(null);
       return;
     }
 
-    const lowerQuery = query.toLowerCase();
-    const filtered = articles.filter((article) => {
-      const matchTitle = article.title.toLowerCase().includes(lowerQuery);
-      const matchDeck = article.deck.toLowerCase().includes(lowerQuery);
-      const matchCategory = article.category.toLowerCase().includes(lowerQuery);
-      const matchContent = article.content.some((block) => 
-        block.value.toLowerCase().includes(lowerQuery)
-      );
-      return matchTitle || matchDeck || matchCategory || matchContent;
-    });
+    const controller = new AbortController();
+    setIsLoading(true);
 
-    setResults(filtered);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(buildSearchUrl(term), {
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) throw new Error(`Search failed with status ${res.status}`);
+
+        const data = await res.json();
+        if (controller.signal.aborted) return;
+
+        setResults(data.docs ?? []);
+        setTotalResults(data.totalDocs ?? 0);
+        setError(null);
+        setIsLoading(false);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error(err);
+        setError('Search is unavailable right now. Please try again.');
+        setResults([]);
+        setTotalResults(0);
+        setIsLoading(false);
+      }
+    }, DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   const closeOverlay = () => {
     setIsOpen(false);
   };
 
-  const handleSearchSubmit = (searchVal: string) => {
-    if (!searchVal.trim()) return;
+  const handleSearchSubmit = useCallback(
+      (searchVal: string) => {
+        if (!searchVal.trim()) return;
 
-    // Add to recent searches
-    const cleanVal = searchVal.trim();
-    let updated = [cleanVal, ...recentSearches.filter(s => s !== cleanVal)];
-    updated = updated.slice(0, 5); // Keep top 5
-    setRecentSearches(updated);
-    localStorage.setItem('recent_searches', JSON.stringify(updated));
-  };
+        // Add to recent searches
+        const cleanVal = searchVal.trim();
+        let updated = [cleanVal, ...recentSearches.filter((s) => s !== cleanVal)];
+        updated = updated.slice(0, 5); // Keep top 5
+        setRecentSearches(updated);
+        localStorage.setItem('recent_searches', JSON.stringify(updated));
+      },
+      [recentSearches],
+  );
 
-  const handleResultClick = (articleId: string) => {
+  const handleResultClick = (slug: string) => {
     handleSearchSubmit(query);
     closeOverlay();
-    router.push(`/article/${articleId}`);
+    router.push(`/article/${slug}`);
   };
 
   const clearRecentSearches = () => {
@@ -128,112 +190,134 @@ export default function SearchOverlay() {
   if (!isOpen) return null;
 
   return (
-    <div className="search-overlay animate-fade-in" ref={overlayRef}>
-      <div className="search-header container">
-        <div className="search-input-wrapper">
-          <Search size={24} className="search-icon-inside" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Type to search articles, analysis, opinions..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearchSubmit(query);
-              }
-            }}
-            className="search-input-field"
-          />
+      <div className="search-overlay animate-fade-in" ref={overlayRef}>
+        <div className="search-header container">
+          <div className="search-input-wrapper">
+            <Search size={24} className="search-icon-inside" />
+            <input
+                ref={inputRef}
+                type="text"
+                placeholder="Type to search articles, analysis, opinions..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit(query);
+                  }
+                }}
+                className="search-input-field"
+            />
+            {isLoading && <Loader2 size={20} className="search-spinner" />}
+          </div>
+          <button onClick={closeOverlay} className="search-close-btn" aria-label="Close search">
+            <X size={24} />
+          </button>
         </div>
-        <button onClick={closeOverlay} className="search-close-btn" aria-label="Close search">
-          <X size={24} />
-        </button>
-      </div>
 
-      <div className="search-body container">
-        {query.trim() === '' ? (
-          <div className="search-suggestions-grid">
-            {/* Recent Searches */}
-            {recentSearches.length > 0 && (
-              <div className="search-section">
-                <div className="search-section-header">
+        <div className="search-body container">
+          {query.trim() === '' ? (
+              <div className="search-suggestions-grid">
+                {/* Recent Searches */}
+                {recentSearches.length > 0 && (
+                    <div className="search-section">
+                      <div className="search-section-header">
+                        <h3 className="search-section-title">
+                          <Clock size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                          Recent Searches
+                        </h3>
+                        <button onClick={clearRecentSearches} className="search-clear-link">
+                          Clear All
+                        </button>
+                      </div>
+                      <div className="recent-list">
+                        {recentSearches.map((term, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setQuery(term)}
+                                className="recent-term-btn"
+                            >
+                              {term}
+                            </button>
+                        ))}
+                      </div>
+                    </div>
+                )}
+
+                {/* Popular Topics */}
+                <div className="search-section">
                   <h3 className="search-section-title">
-                    <Clock size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                    Recent Searches
+                    <TrendingUp size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                    Popular Topics
                   </h3>
-                  <button onClick={clearRecentSearches} className="search-clear-link">
-                    Clear All
-                  </button>
-                </div>
-                <div className="recent-list">
-                  {recentSearches.map((term, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setQuery(term)}
-                      className="recent-term-btn"
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Popular Topics */}
-            <div className="search-section">
-              <h3 className="search-section-title">
-                <TrendingUp size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                Popular Topics
-              </h3>
-              <div className="popular-topics-list">
-                {POPULAR_TOPICS.map((topic) => (
-                  <button
-                    key={topic}
-                    onClick={() => setQuery(topic)}
-                    className="topic-tag-btn"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="search-results-section">
-            <h3 className="search-results-count">
-              Found {results.length} {results.length === 1 ? 'article' : 'articles'} matching &ldquo;{query}&rdquo;
-            </h3>
-            
-            {results.length > 0 ? (
-              <div className="search-results-list">
-                {results.map((article) => (
-                  <div
-                    key={article.id}
-                    onClick={() => handleResultClick(article.id)}
-                    className="search-result-item"
-                  >
-                    <div className="search-result-meta">
-                      <span className="search-result-category">{article.category}</span>
-                      <span className="search-result-dot">&bull;</span>
-                      <span>{article.readTime}</span>
-                    </div>
-                    <h4 className="search-result-title">{article.title}</h4>
-                    <p className="search-result-deck">{article.deck}</p>
-                    <div className="search-result-action">
-                      Read Article <ArrowRight size={14} style={{ marginLeft: '4px' }} />
-                    </div>
+                  <div className="popular-topics-list">
+                    {POPULAR_TOPICS.map((topic) => (
+                        <button
+                            key={topic}
+                            onClick={() => setQuery(topic)}
+                            className="topic-tag-btn"
+                        >
+                          {topic}
+                        </button>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            ) : (
-              <div className="search-no-results">
-                <p>No stories found. Try searching for &ldquo;federalism&rdquo; or &ldquo;chiya&rdquo;.</p>
+          ) : (
+              <div className="search-results-section">
+                {error ? (
+                    <div className="search-no-results">
+                      <p>{error}</p>
+                    </div>
+                ) : (
+                    <>
+                      <h3 className="search-results-count">
+                        {isLoading
+                            ? `Searching for \u201C${query}\u201D...`
+                            : `Found ${totalResults} ${totalResults === 1 ? 'article' : 'articles'} matching \u201C${query}\u201D`}
+                      </h3>
+
+                      {!isLoading && results.length > 0 && (
+                          <div className="search-results-list">
+                            {results.map((article) => {
+                              const category = resolve<Category>(article.category);
+
+                              return (
+                                  <div
+                                      key={article.id}
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() => handleResultClick(article.slug)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleResultClick(article.slug);
+                                      }}
+                                      className="search-result-item"
+                                  >
+                                    <div className="search-result-meta">
+                                      <span className="search-result-category">{category?.name}</span>
+                                      <span className="search-result-dot">&bull;</span>
+                                      <span>{article.readTime}</span>
+                                    </div>
+                                    <h4 className="search-result-title">{article.title}</h4>
+                                    <p className="search-result-deck">{article.deck}</p>
+                                    <div className="search-result-action">
+                                      Read Article <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+                                    </div>
+                                  </div>
+                              );
+                            })}
+                          </div>
+                      )}
+
+                      {!isLoading && results.length === 0 && (
+                          <div className="search-no-results">
+                            <p>No stories found. Try searching for &ldquo;federalism&rdquo; or &ldquo;chiya&rdquo;.</p>
+                          </div>
+                      )}
+                    </>
+                )}
               </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
   );
 }
