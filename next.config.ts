@@ -1,4 +1,4 @@
-import { withPayload } from "@payloadcms/next/withPayload";
+import {withPayload} from "@payloadcms/next/withPayload";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -7,6 +7,7 @@ const nextConfig = {
             fullUrl: true,
         },
     },
+    serverExternalPackages: ['sharp'],
 };
 
-export default withPayload(nextConfig);
+export default withPayload(nextConfig, { devBundleServerPackages: false })
