@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "payload run src/seed.ts"
+    "seed": "payload run src/seed.ts",
+    "payload": "payload",
+    "generate:importmap": "payload generate:importmap"
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "^3.88.0",
