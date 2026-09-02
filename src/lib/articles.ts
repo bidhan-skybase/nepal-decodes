@@ -41,3 +41,41 @@ export const getTrending = cache(async (limit = 5) => {
     })
     return docs as Article[]
 })
+
+const PUBLISHED = { _status: { equals: 'published' } }
+
+export const getLatestArticles = cache(async (limit = 20) => {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({
+        collection: 'articles',
+        depth: 2,
+        limit,
+        sort: '-publishedAt',
+        where: PUBLISHED,
+    })
+    return docs
+})
+
+export const getMostViewed = cache(async (limit = 4) => {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({
+        collection: 'articles',
+        depth: 1,
+        limit,
+        sort: '-views',
+        where: PUBLISHED,
+    })
+    return docs
+})
+
+export const getEditorsPicks = cache(async (limit = 3) => {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({
+        collection: 'articles',
+        depth: 1,
+        limit,
+        sort: '-publishedAt',
+        where: { and: [PUBLISHED, { editorsPick: { equals: true } }] },
+    })
+    return docs
+})
