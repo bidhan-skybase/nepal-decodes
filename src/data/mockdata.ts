@@ -38,13 +38,33 @@ export interface Category {
 }
 
 export const categories: Category[] = [
-    { id: 'politics', name: 'Politics', description: 'Deciphering power, governance, and civic movements in Nepal.' },
-    { id: 'society', name: 'Society', description: 'Stories of communities, struggles, and progress in daily Nepalese life.' },
-    { id: 'economy', name: 'Economy', description: 'Analyzing trade, infrastructure, and financial currents shaping Nepal\'s future.' },
-    { id: 'technology', name: 'Technology', description: 'Tracking digitization, start-ups, and technology policy in the Himalayan republic.' },
-    { id: 'culture', name: 'Culture', description: 'Unraveling heritage, history, and arts in the valley and beyond.' },
-    { id: 'opinion', name: 'Opinion', description: 'Thoughtful commentary and analytical perspectives on current affairs and human experiences.' },
-    { id: 'explainers', name: 'Explainers', description: 'Context, history, and structural breakdowns of complex national stories.' }
+    {id: 'politics', name: 'Politics', description: 'Deciphering power, governance, and civic movements in Nepal.'},
+    {
+        id: 'society',
+        name: 'Society',
+        description: 'Stories of communities, struggles, and progress in daily Nepalese life.'
+    },
+    {
+        id: 'economy',
+        name: 'Economy',
+        description: 'Analyzing trade, infrastructure, and financial currents shaping Nepal\'s future.'
+    },
+    {
+        id: 'technology',
+        name: 'Technology',
+        description: 'Tracking digitization, start-ups, and technology policy in the Himalayan republic.'
+    },
+    {id: 'culture', name: 'Culture', description: 'Unraveling heritage, history, and arts in the valley and beyond.'},
+    {
+        id: 'opinion',
+        name: 'Opinion',
+        description: 'Thoughtful commentary and analytical perspectives on current affairs and human experiences.'
+    },
+    {
+        id: 'explainers',
+        name: 'Explainers',
+        description: 'Context, history, and structural breakdowns of complex national stories.'
+    }
 ];
 
 export const authors: Author[] = [

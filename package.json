@@ -16,6 +16,8 @@
     "@payloadcms/db-mongodb": "^3.88.0",
     "@payloadcms/next": "^3.88.0",
     "@payloadcms/richtext-lexical": "^3.88.0",
+    "@payloadcms/storage-vercel-blob": "^3.88.0",
+    "@vercel/blob": "^2.8.0",
     "graphql": "^16.8.0",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
@@ -23,7 +25,8 @@
     "qs-esm": "^8.0.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "vercel": "^59.11.2"
   },
   "devDependencies": {
     "@types/node": "^20",
