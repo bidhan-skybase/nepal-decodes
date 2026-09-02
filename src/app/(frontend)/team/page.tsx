@@ -1,5 +1,5 @@
-import { authors } from '@/data/mockData';
 import { Twitter, Linkedin } from '@/components/BrandIcons';
+import {authors} from "@/data/mockdata";
 
 export default function TeamPage() {
   return (
@@ -34,7 +34,7 @@ export default function TeamPage() {
               <h3 className="team-member-name">{member.name}</h3>
               <div className="team-member-role">{member.role}</div>
               <p className="team-member-bio">{member.bio}</p>
-              
+
               <div className="team-member-socials">
                 {member.twitter && (
                   <a
