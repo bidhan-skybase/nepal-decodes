@@ -16,6 +16,7 @@
     "@payloadcms/db-mongodb": "^3.88.0",
     "@payloadcms/next": "^3.88.0",
     "@payloadcms/richtext-lexical": "^3.88.0",
+    "graphql": "^17.0.2",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
     "payload": "^3.88.0",
